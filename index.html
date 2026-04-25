@@ -985,18 +985,24 @@ function playTrack(i){
   cur=i;
   const t=tracks[i];
   document.getElementById('music-display').textContent='♪ '+t.name;
-  document.querySelectorAll('.music-track').forEach((el,idx)=>el.classList.toggle('playing',idx===i));
+  document.querySelectorAll('.music-track').forEach(function(el,j){ el.classList.toggle('playing',j===i); });
   const ap=AP();
-  if(t.src){ ap.src=t.src; ap.play(); document.getElementById('wav-status').style.display='none'; }
-  else { ap.pause(); ap.removeAttribute('src'); PB().textContent='▶'; document.getElementById('prog-fill').style.width='0'; document.getElementById('wav-status').textContent='♪ WAV coming soon — open on SoundCloud ↗'; document.getElementById('wav-status').style.display='block'; }
+  ap.pause();
+  ap.src=t.src;
+  ap.load();
+  ap.addEventListener('canplay', function onReady(){
+    ap.removeEventListener('canplay',onReady);
+    var p=ap.play();
+    if(p!==undefined) p.catch(function(e){ console.warn('play blocked:',e); PB().textContent='▶'; });
+  }, {once:true});
 }
-
 function togglePlay(){
   const ap=AP();
-  if(!tracks[cur].src){ window.open('https://soundcloud.com/iliayou','_blank'); return; }
-  if(ap.paused){ ap.play(); } else { ap.pause(); }
+  if(ap.paused){
+    var p=ap.play();
+    if(p!==undefined) p.catch(function(e){ console.warn('play blocked:',e); });
+  } else { ap.pause(); }
 }
-
 function onAudioPlay(){ PB().textContent='⏸'; document.getElementById('music-display').textContent='♪ '+tracks[cur].name; }
 function onAudioPause(){ PB().textContent='▶'; }
 
